@@ -1,0 +1,180 @@
+<head>
+    <style lang="text/css">
+    .proba-second {
+        display: flex;
+        font-size:20pt;
+        float:right;
+        width: 29%;
+        height: 40px;
+        justify-content: flex-end;
+    }
+    ul > li:nth-child(2n) .proba-second {
+        background-color: lightgray;
+    }
+    ul > li:nth-child(2n) .difficulty {
+        background-color: lightgray;
+    }
+    .difficulty {
+        display:block;
+        height: 40px;
+        float:left;
+        width:70%;
+    }
+    .difficulty span {
+        font-size:18pt;
+    }
+    #dicerepeat {
+        font-size: 25pt;
+    }
+    </style>
+</head>
+
+<body>
+
+        <div>
+            Nombre de dés:
+            <input type="number" value="1" id="dice" onkeyup="calc()" placeholder="nombre de d&eacute;s"/>
+            <br/>
+            Nombre de succès à faire pour réussir:
+            <input type="number" value="1" id="diff" onkeyup="calc()" placeholder="nombre de succ&egrave;s à faire"/>
+            <br/>
+    
+            <div style="font-size:30pt">
+                <div style="display:inline-block;margin-right: 5px;">Proba:</div>
+                <div id="proba" style="display:inline-block"></div>
+                <div style="display:inline-block;font-size:10pt;margin-left: -10px" id="smallDecimals"></div>
+                <div style="display:inline-block">%</div>
+            </div>
+        </div>
+
+        <div>
+            <div style="display:inline-block">Avec&nbsp;</div><div style="display:inline-block" id="dicerepeat"></div><div style="display:inline-block">&nbsp;dé(s), voici vos chances de réussite pour chaque difficulté:</div>
+            <ul style="list-style:none;width: 35%">
+                <li>
+                    <div class="difficulty"><span>Facile</span><sub>(1)</sub></div>
+                    <div class="proba-second">
+                        <div id="proba1" style="display:inline-block"></div>
+                        <div style="display:inline-block">%</div>
+                    </div>
+                </li>
+                <li>
+                    <div class="difficulty"><span>Moyenne</span><sub>(2)</sub></div>
+                    <div class="proba-second">
+                        <div id="proba2" style="display:inline-block"></div>
+                        <div style="display:inline-block">%</div>
+                    </div>
+                </li>
+                <li>
+                    <div class="difficulty"><span>Difficile</span><sub>(4)</sub></div>
+                    <div class="proba-second">
+                        <div id="proba4" style="display:inline-block"></div>
+                        <div style="display:inline-block">%</div>
+                    </div>
+                </li>
+                <li>
+                    <div class="difficulty"><span>Très difficile</span><sub>(6)</sub></div>
+                    <div class="proba-second">
+                        <div id="proba6" style="display:inline-block"></div>
+                        <div style="display:inline-block">%</div>
+                    </div>
+                </li>
+                <li>
+                    <div class="difficulty"><span>Extrême</span><sub>(8)</sub></div>
+                    <div class="proba-second">
+                        <div id="proba8" style="display:inline-block"></div>
+                        <div style="display:inline-block">%</div>
+                    </div>
+                </li>
+                <li>
+                    <div class="difficulty"><span>Extrême+</span><sub>(9)</sub></div>
+                    <div class="proba-second">
+                        <div id="proba9" style="display:inline-block"></div>
+                        <div style="display:inline-block">%</div>
+                    </div>
+                </li>
+                <li>
+                    <div class="difficulty"><span>Extrême++</span><sub>(10)</sub></div>
+                    <div class="proba-second">
+                        <div id="proba10" style="display:inline-block"></div>
+                        <div style="display:inline-block">%</div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+    <script type="text/javascript">
+
+        function binomial(n, k) {
+            if ((typeof n !== 'number') || (typeof k !== 'number')) 
+                return false; 
+            var coeff = 1;
+            for (var x = n-k+1; x <= n; x++) coeff *= x;
+            for (x = 1; x <= k; x++) coeff /= x;
+            return coeff;
+        }
+
+        //sum ((n choose i)*((2/6)^i)*((4/6)^(n - i))), i=k to n
+        function calcProbabilityOfAtLeastKSuccessesWithNDice(n, k) {
+            
+            if (k > n) return { sum:0, partialSums: [] };
+
+            let partialSums = [];
+            let sum = 0;
+            let i = k;
+            let binomialCoeff, p, invP, currentSum;
+            while (i <= n) {
+                binomialCoeff = binomial(n, i);
+                p = Math.pow(2/6, i);
+                invP = Math.pow(4/6, n - i);
+                currentSum = binomialCoeff*p*invP;
+                sum += currentSum;
+                partialSums.push(currentSum);
+                i++;
+            }
+
+            return { sum: sum , partialSums };
+        }
+
+        function calc() {
+            let dice = document.getElementById('dice');
+            let diff = document.getElementById('diff');
+
+            if (dice.value == '' || diff.value == '')
+                return;
+
+            let sums = calcProbabilityOfAtLeastKSuccessesWithNDice(1*dice.value, 1*diff.value);
+
+            let proba = document.getElementById('proba');
+            let percentage = Math.round(sums.sum * 10000, 5)/100;
+            proba.innerHTML = percentage.toFixed(2);
+            
+            let smallDecimals = document.getElementById('smallDecimals');
+            let decimals = ((sums.sum * 100)-percentage)*1000;
+            if (decimals < 0) decimals = 0;
+            else decimals = Math.round(decimals * 10000000);
+            if (decimals == 0)
+                smallDecimals.innerHTML = '';
+            else
+                smallDecimals.innerHTML = decimals;
+
+            document.getElementById('dicerepeat').innerHTML = dice.value;
+
+            calcForAllDifficulties(1*dice.value, [1, 2, 4, 6, 8, 9, 10]);
+        }
+
+        function calcForAllDifficulties(dice, diffs) {
+            for (i in diffs) {
+                if (diffs.hasOwnProperty(i)) {
+                    let diff = diffs[i];
+                    let sums = calcProbabilityOfAtLeastKSuccessesWithNDice(dice, diff);
+
+                    let proba = document.getElementById('proba' + diff);
+                    let percentage = Math.round(sums.sum * 10000, 5)/100;
+                    proba.innerHTML = '~' + percentage.toFixed(2);
+                }
+            }
+        }
+
+        calc();
+    </script>
+</body>
