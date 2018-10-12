@@ -4,9 +4,16 @@
         display: flex;
         font-size:20pt;
         float:right;
-        width: 29%;
+        width: 7%;
         height: 40px;
         justify-content: flex-end;
+    }
+    .explosive {
+        color: red;
+    }
+    .explosive::before {
+        content: "XPLO";
+        font-size: 8pt;
     }
     ul > li:nth-child(2n) .proba-second {
         background-color: lightgray;
@@ -49,11 +56,19 @@
 
         <div>
             <div style="display:inline-block">Avec&nbsp;</div><div style="display:inline-block" id="dicerepeat"></div><div style="display:inline-block">&nbsp;dé(s), voici vos chances de réussite pour chaque difficulté:</div>
-            <ul style="list-style:none;width: 35%">
+            <ul style="list-style:none;width: 90%">
                 <li>
                     <div class="difficulty"><span>Facile</span><sub>(1)</sub></div>
                     <div class="proba-second">
                         <div id="proba1" style="display:inline-block"></div>
+                        <div style="display:inline-block">%</div>
+                    </div>
+                    <div class="proba-second">
+                        <div id="probaec1" style="display:inline-block"></div>
+                        <div style="display:inline-block">%</div>
+                    </div>
+                    <div class="proba-second explosive">
+                        <div id="probex1" style="display:inline-block"></div>
                         <div style="display:inline-block">%</div>
                     </div>
                 </li>
@@ -63,11 +78,27 @@
                         <div id="proba2" style="display:inline-block"></div>
                         <div style="display:inline-block">%</div>
                     </div>
+                    <div class="proba-second">
+                        <div id="probaec2" style="display:inline-block"></div>
+                        <div style="display:inline-block">%</div>
+                    </div>
+                    <div class="proba-second">
+                        <div id="probex2" style="display:inline-block"></div>
+                        <div style="display:inline-block">%</div>
+                    </div>
                 </li>
                 <li>
                     <div class="difficulty"><span>Difficile</span><sub>(4)</sub></div>
                     <div class="proba-second">
                         <div id="proba4" style="display:inline-block"></div>
+                        <div style="display:inline-block">%</div>
+                    </div>
+                    <div class="proba-second">
+                        <div id="probaec4" style="display:inline-block"></div>
+                        <div style="display:inline-block">%</div>
+                    </div>
+                    <div class="proba-second">
+                        <div id="probex4" style="display:inline-block"></div>
                         <div style="display:inline-block">%</div>
                     </div>
                 </li>
@@ -77,11 +108,27 @@
                         <div id="proba6" style="display:inline-block"></div>
                         <div style="display:inline-block">%</div>
                     </div>
+                    <div class="proba-second">
+                        <div id="probaec6" style="display:inline-block"></div>
+                        <div style="display:inline-block">%</div>
+                    </div>
+                    <div class="proba-second">
+                        <div id="probex6" style="display:inline-block"></div>
+                        <div style="display:inline-block">%</div>
+                    </div>
                 </li>
                 <li>
                     <div class="difficulty"><span>Extrême</span><sub>(8)</sub></div>
                     <div class="proba-second">
                         <div id="proba8" style="display:inline-block"></div>
+                        <div style="display:inline-block">%</div>
+                    </div>
+                    <div class="proba-second">
+                        <div id="probaec8" style="display:inline-block"></div>
+                        <div style="display:inline-block">%</div>
+                    </div>
+                    <div class="proba-second">
+                        <div id="probex8" style="display:inline-block"></div>
                         <div style="display:inline-block">%</div>
                     </div>
                 </li>
@@ -91,11 +138,27 @@
                         <div id="proba9" style="display:inline-block"></div>
                         <div style="display:inline-block">%</div>
                     </div>
+                    <div class="proba-second">
+                        <div id="probaec9" style="display:inline-block"></div>
+                        <div style="display:inline-block">%</div>
+                    </div>
+                    <div class="proba-second">
+                        <div id="probex9" style="display:inline-block"></div>
+                        <div style="display:inline-block">%</div>
+                    </div>
                 </li>
                 <li>
                     <div class="difficulty"><span>Extrême++</span><sub>(10)</sub></div>
                     <div class="proba-second">
                         <div id="proba10" style="display:inline-block"></div>
+                        <div style="display:inline-block">%</div>
+                    </div>
+                    <div class="proba-second">
+                        <div id="probaec10" style="display:inline-block"></div>
+                        <div style="display:inline-block">%</div>
+                    </div>
+                    <div class="proba-second">
+                        <div id="probex10" style="display:inline-block"></div>
                         <div style="display:inline-block">%</div>
                     </div>
                 </li>
@@ -113,20 +176,42 @@
             return coeff;
         }
 
+        function PXequalsK(n, k, successProbability) {
+            let binomialCoeff = binomial(n, k);
+            let p = Math.pow(successProbability, k);
+            let invP = Math.pow(1 - successProbability, n - k);
+            let PX = binomialCoeff*p*invP;
+            return PX;
+        }
+
+        // P(X = k (without too much ones) = P(X = k) * sum ((n-k choose i)*(1/6^i)*((5/6)^(n-k-i)), i=0 to n-k
+        function PXequalsKWithOnes(n, k) {
+            let binomialCoeff = binomial(n, k);
+            let p = Math.pow(1/3, k);
+            let invP = Math.pow(2/3, n - k);
+            let PX = binomialCoeff*p*invP;
+
+            let i = 0;
+            let PnE = 0;
+            while (i <= (n - k)) {
+                let currentSum = PXequalsK(n-k, i, 1/6);
+                PnE += currentSum;
+                i++;
+            }
+            
+            return PX*PnE;
+        }
+
         //sum ((n choose i)*((2/6)^i)*((4/6)^(n - i))), i=k to n
-        function calcProbabilityOfAtLeastKSuccessesWithNDice(n, k) {
+        function calcProbabilityOfAtLeastKSuccessesWithNDice(n, k, formula) {
             
             if (k > n) return { sum:0, partialSums: [] };
 
             let partialSums = [];
             let sum = 0;
             let i = k;
-            let binomialCoeff, p, invP, currentSum;
             while (i <= n) {
-                binomialCoeff = binomial(n, i);
-                p = Math.pow(2/6, i);
-                invP = Math.pow(4/6, n - i);
-                currentSum = binomialCoeff*p*invP;
+                let currentSum = formula(n, i, 1/3);
                 sum += currentSum;
                 partialSums.push(currentSum);
                 i++;
@@ -142,7 +227,7 @@
             if (dice.value == '' || diff.value == '')
                 return;
 
-            let sums = calcProbabilityOfAtLeastKSuccessesWithNDice(1*dice.value, 1*diff.value);
+            let sums = calcProbabilityOfAtLeastKSuccessesWithNDice(1*dice.value, 1*diff.value, PXequalsK);
 
             let proba = document.getElementById('proba');
             let percentage = Math.round(sums.sum * 10000, 5)/100;
@@ -166,13 +251,53 @@
             for (i in diffs) {
                 if (diffs.hasOwnProperty(i)) {
                     let diff = diffs[i];
-                    let sums = calcProbabilityOfAtLeastKSuccessesWithNDice(dice, diff);
+                    let sums = calcProbabilityOfAtLeastKSuccessesWithNDice(dice, diff, PXequalsK);
+                    let sumsEC = calcProbabilityOfAtLeastKSuccessesWithNDice(dice, diff, PXequalsKWithOnes);
+                    let sumex = calcProbabilityOfAtLeastKSuccessesWithNExplosiveDice(dice, diff);
 
                     let proba = document.getElementById('proba' + diff);
                     let percentage = Math.round(sums.sum * 10000, 5)/100;
                     proba.innerHTML = '~' + percentage.toFixed(2);
+
+                    let probaec = document.getElementById('probaec' + diff);
+                    let percentageec = Math.round(sumsEC.sum * 10000, 5)/100;
+                    probaec.innerHTML = '~' + percentageec.toFixed(2);
+
+                    let probex = document.getElementById('probex' + diff);
+                    percentage = Math.round(sumex * 10000, 5)/100;
+                    probex.innerHTML = '~' + percentage.toFixed(2);
                 }
             }
+        }
+
+        //Pex(X = h) = ((4^n)/(6^(n+h)))*sum ((n choose k)*(n+h-k-1 choose h-k)*((6/4)^k)), k = 0 to max(h, n)
+        function Pex(n, h) {
+            let max = Math.max(n, h);
+            let coef = (Math.pow(4, n)/Math.pow(6, n + h));
+            let sum = 0;
+            let k = 0;
+            while (k <= max) {
+                let binomialCoeff = binomial(n, k);
+                let secondBenomial = binomial(n+h-k-1, h-k);
+                let lastCoef = Math.pow(6/4, k);
+                sum += binomialCoeff * secondBenomial * lastCoef;
+                k++;
+            }
+            return coef * sum;
+        }
+
+        //Pex(X >= h) = sum P(X = i), i = h to max(h, n)
+        function calcProbabilityOfAtLeastKSuccessesWithNExplosiveDice(n, k) {
+            let sum = 0;
+            let i = k;
+            let previousSum = 0;
+            while (i <= 50) {
+                sum += Pex(n, i);
+                if (sum.toFixed(2) == previousSum.toFixed(2))
+                    break;
+                i++;
+            }
+            return sum;
         }
 
         calc();
